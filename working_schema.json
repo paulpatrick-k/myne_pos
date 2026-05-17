@@ -1,0 +1,88 @@
+[
+  {
+    "name": "businesses",
+    "type": "base",
+    "schema": [
+      { "name": "business_name", "type": "text", "required": true },
+      { "name": "email", "type": "email", "required": true },
+      { "name": "phone", "type": "text", "required": true },
+      { "name": "address", "type": "text", "required": true },
+      { "name": "category", "type": "text", "required": true },
+      { "name": "unique_code", "type": "text", "required": true },
+      { "name": "trial_start", "type": "date", "required": false },
+      { "name": "trial_end", "type": "date", "required": false },
+      { "name": "subscription_active", "type": "bool", "required": false }
+    ],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  },
+  {
+    "name": "user",
+    "type": "auth",
+    "schema": [
+      { "name": "role", "type": "text", "required": false },
+      { "name": "business_id", "type": "text", "required": false }
+    ],
+    "listRule": "@request.auth.role = \"admin\" && @request.auth.business_id = business_id",
+    "viewRule": "@request.auth = null || @request.auth.id = id || (@request.auth.role = \"admin\" && @request.auth.business_id = business_id)",
+    "createRule": null,
+    "updateRule": "@request.auth.id = id",
+    "deleteRule": "@request.auth.id = id"
+  },
+  {
+    "name": "items",
+    "type": "base",
+    "schema": [
+      { "name": "business_id", "type": "text", "required": true },
+      { "name": "name", "type": "text", "required": true },
+      { "name": "price", "type": "number", "required": true },
+      { "name": "stock_qty", "type": "number", "required": true },
+      { "name": "category", "type": "text", "required": true },
+      { "name": "description", "type": "text", "required": false },
+      { "name": "custom_data", "type": "json", "required": false }
+    ],
+    "listRule": "@request.auth.business_id = business_id",
+    "viewRule": "@request.auth.business_id = business_id",
+    "createRule": "@request.auth.business_id = business_id",
+    "updateRule": "@request.auth.business_id = business_id",
+    "deleteRule": "@request.auth.business_id = business_id"
+  },
+  {
+    "name": "sales",
+    "type": "base",
+    "schema": [
+      { "name": "business_id", "type": "text", "required": true },
+      { "name": "user", "type": "text", "required": true },
+      { "name": "user_email", "type": "email", "required": true },
+      { "name": "items", "type": "json", "required": true },
+      { "name": "total_amount", "type": "number", "required": true },
+      { "name": "payment_method", "type": "text", "required": true },
+      { "name": "payment_reference", "type": "text", "required": false },
+      { "name": "receipt_no", "type": "text", "required": true }
+    ],
+    "listRule": "@request.auth.business_id = business_id",
+    "viewRule": "@request.auth.business_id = business_id",
+    "createRule": "@request.auth.business_id = business_id",
+    "updateRule": null,
+    "deleteRule": null
+  },
+  {
+    "name": "audit_logs",
+    "type": "base",
+    "schema": [
+      { "name": "business_id", "type": "text", "required": true },
+      { "name": "user_id", "type": "text", "required": true },
+      { "name": "user_email", "type": "email", "required": true },
+      { "name": "action", "type": "text", "required": true },
+      { "name": "details", "type": "json", "required": false }
+    ],
+    "listRule": "@request.auth.role = \"admin\" && @request.auth.business_id = business_id",
+    "viewRule": "@request.auth.role = \"admin\" && @request.auth.business_id = business_id",
+    "createRule": "@request.auth.business_id = business_id",
+    "updateRule": null,
+    "deleteRule": null
+  }
+]

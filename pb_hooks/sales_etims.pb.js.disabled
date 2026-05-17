@@ -1,0 +1,94 @@
+// pb_hooks/sales_etims.pb.js
+onModelAfterCreate((e) => {
+  const { model, dao } = e;
+  if (model.collection().name !== "sales") return;
+
+  const sale = model;
+  processSale(sale, dao).catch((err) =>
+    console.error("Unhandled error in KRA hook:", err)
+  );
+});
+
+async function processSale(sale, dao) {
+  try {
+    const business = await dao.findRecordById("businesses", sale.get("business_id"));
+    if (business.get("country") !== "Kenya") {
+      console.log(`Skipping KRA for ${business.get("business_name")} (not Kenya)`);
+      return;
+    }
+
+    const settings = await dao.findRecordsByFilter(
+      "app_settings",
+      "key ~ 'aggregator_url' || key ~ 'aggregator_api_key'"
+    );
+
+    let aggregatorUrl, apiKey;
+    for (const rec of settings) {
+      if (rec.get("key") === "aggregator_url") aggregatorUrl = rec.get("value");
+      if (rec.get("key") === "aggregator_api_key") apiKey = rec.get("value");
+    }
+
+    if (!aggregatorUrl || !apiKey) {
+      console.warn("Aggregator URL or API key missing – skipping KRA");
+      return;
+    }
+
+    const items = sale.get("items") || [];
+    const payload = {
+      receipt_no: sale.get("receipt_no"),
+      sale_date: sale.get("created"),
+      total_amount: sale.get("total_amount"),
+      payment_method: sale.get("payment_method"),
+      payment_reference: sale.get("payment_reference") || "",
+      items: items.map((it) => ({
+        name: it.name,
+        quantity: it.quantity,
+        price: it.price,
+      })),
+      business: {
+        id: business.id,
+        name: business.get("business_name"),
+        pin: business.get("pin") || "",
+      },
+    };
+
+    let attempt = sale.get("kra_sync_attempts") || 0;
+    attempt++;
+
+    const response = await $http.send({
+      url: aggregatorUrl,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+      timeout: 30,
+    });
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      const data = response.json;
+      await dao.runInTransaction(async (txDao) => {
+        sale.set("kra_status", "sent");
+        sale.set("kra_invoice_id", data.invoice_id || data.id || null);
+        sale.set("kra_qr_code_url", data.qr_code_url || null);
+        sale.set("kra_sync_attempts", attempt);
+        await txDao.saveRecord(sale);
+      });
+      console.log(`✅ KRA success for sale ${sale.id}`);
+    } else {
+      throw new Error(`HTTP ${response.statusCode}: ${response.body}`);
+    }
+  } catch (err) {
+    console.error(`❌ KRA failed for sale ${sale.id}:`, err);
+    try {
+      let attempt = sale.get("kra_sync_attempts") || 0;
+      attempt++;
+      sale.set("kra_status", "failed");
+      sale.set("kra_sync_attempts", attempt);
+      await dao.saveRecord(sale);
+    } catch (saveErr) {
+      console.error("Could not update sale status:", saveErr);
+    }
+  }
+}
