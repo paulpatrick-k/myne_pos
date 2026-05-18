@@ -44,7 +44,7 @@ dependencies:
   url_launcher: ^6.2.5
   image_picker: ^1.0.7
   crypto: ^3.0.3
-  collection: ^1.19.1
+  collection: ^1.18.0
 
 dependency_overrides:
   image: ^3.3.0
