@@ -166,7 +166,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: DropdownButtonFormField<String>(
-                          initialValue: _selectedDrinkCategoryFilter ?? 'All',
+                          value: _selectedDrinkCategoryFilter ?? 'All',
                           decoration: const InputDecoration(
                             labelText: 'Filter by Drink Category',
                             border: OutlineInputBorder(),

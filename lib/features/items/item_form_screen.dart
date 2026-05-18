@@ -453,7 +453,7 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
 
         fields.add(
           DropdownButtonFormField<String>(
-            initialValue: _selectedSize,
+            value: _selectedSize,
             decoration: const InputDecoration(labelText: 'Size *'),
             items: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
                 .map((s) => DropdownMenuItem(value: s, child: Text(s)))
