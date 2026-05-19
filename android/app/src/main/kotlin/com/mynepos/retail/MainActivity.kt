@@ -1,4 +1,4 @@
-package com.myne.shop.pos
+package com.mynepos.retail
 
 import io.flutter.embedding.android.FlutterActivity
 
