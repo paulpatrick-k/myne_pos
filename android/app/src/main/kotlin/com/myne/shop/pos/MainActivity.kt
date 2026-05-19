@@ -1,4 +1,4 @@
-package com.example.myne_pos
+package com.myne.shop.pos
 
 import io.flutter.embedding.android.FlutterActivity
 
