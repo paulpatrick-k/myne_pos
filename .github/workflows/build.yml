@@ -3,7 +3,7 @@ name: Build Signed APK
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:   # allows manual trigger
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,14 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.5'
+          flutter-version: '3.19.6'   # stable and widely used
+          channel: 'stable'
 
       - run: flutter pub get
 
@@ -28,6 +31,7 @@ jobs:
 
       - name: Create key.properties
         run: |
+          mkdir -p android
           cat > android/key.properties << EOF
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword=${{ secrets.KEY_PASSWORD }}
@@ -35,7 +39,8 @@ jobs:
           storeFile=myne-release-key.keystore
           EOF
 
-      - run: flutter build apk --release
+      - name: Build APK
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
