@@ -168,7 +168,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
                           final staff = _staff[i];
                           return ListTile(
                             leading: const Icon(Icons.person),
-                            title: Text(staff.getStringValue('email')),
+                            title: Text(staff.data['email']?.toString() ?? 'No email'),
                             subtitle: const Text('Role: Staff'),
                             trailing: IconButton(
                               icon: const Icon(Icons.lock_reset),
