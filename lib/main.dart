@@ -18,21 +18,6 @@ import 'features/cart/cart_provider.dart';
 import 'features/cart/cart_screen.dart';
 import 'features/subscription/paywall_screen.dart';
 
-Future<String?> _findEnvFilePath() async {
-  var directory = Directory.current;
-  for (var i = 0; i < 6; i++) {
-    final candidate = File('${directory.path}${Platform.pathSeparator}.env');
-    if (await candidate.exists()) {
-      return candidate.path;
-    }
-    if (directory.parent.path == directory.path) {
-      break;
-    }
-    directory = directory.parent;
-  }
-  return null;
-}
-
 Future<void> _migrateBusinessesWithDefaults() async {
   final pbService = PocketBaseService();
   try {
@@ -57,18 +42,9 @@ Future<void> _migrateBusinessesWithDefaults() async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    final envPath = await _findEnvFilePath();
-    if (envPath != null) {
-      await dotenv.load(fileName: envPath);
-      print('Loaded .env from $envPath');
-    } else {
-      throw Exception('.env file not found');
-    }
-  } catch (e) {
-    print('⚠️ .env file missing or failed to load, using default URL.');
-    dotenv.testLoad(fileInput: 'POCKETBASE_URL=http://127.0.0.1:8090');
-  }
+  // Load .env from assets (bundled in APK)
+  await dotenv.load();
+  print('Loaded .env from assets: POCKETBASE_URL = ${dotenv.env['POCKETBASE_URL']}');
 
   final appSupportDirectory = await getApplicationSupportDirectory();
   final hiveStorageDirectory = Directory(
