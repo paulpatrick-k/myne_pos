@@ -1,6 +1,4 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../core/services/pocketbase_service.dart';
@@ -17,65 +15,53 @@ class _PaywallScreenState extends State<PaywallScreen> {
   bool _isProcessing = false;
   String? _error;
 
-  // Fixed subscription amount in KES (1050 ≈ $7.99)
-  static const int _amountInKes = 1050;
-
   Future<void> _startPayment() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final pbService = PocketBaseService();
 
-    // Generate a unique reference
+    // Generate a unique transaction reference
     final reference = pbService.generateTransactionReference();
-
-    // Load Paystack public key from .env
-    final publicKey = dotenv.env['PAYSTACK_PUBLIC_KEY'];
-    if (publicKey == null || publicKey.isEmpty) {
-      setState(() => _error = 'Paystack public key missing. Check .env');
-      return;
-    }
 
     setState(() {
       _isProcessing = true;
       _error = null;
     });
 
-    // Define dummy success/failure URLs – the webview uses them to detect completion
-    const successUrl = 'https://myne.app/paystack/success';
-    const failureUrl = 'https://myne.app/paystack/failure';
+    try {
+      // Step 1: Call our PocketBase hook to initialize the transaction
+      final response = await pbService.pb.send('/api/init-payment', method: 'POST', body: {
+        'amount': 105000,  // 1050 KES in kobo (smallest currency unit)
+        'email': auth.userEmail ?? '',
+        'businessId': auth.businessId,
+        'reference': reference,
+      });
 
-    final result = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentWebViewScreen(
-          amount: _amountInKes,
-          email: auth.userEmail ?? '',
-          reference: reference,
-          publicKey: publicKey,
-          successUrl: successUrl,
-          failureUrl: failureUrl,
+      final authUrl = response['authorization_url'] as String?;
+      if (authUrl == null) throw Exception('No authorization URL returned');
+
+      // Step 2: Open the WebView with the returned URL
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentWebViewScreen(
+            authorizationUrl: authUrl,
+          ),
         ),
-      ),
-    );
+      );
 
-    if (!mounted) return;
-
-    setState(() => _isProcessing = false);
-
-    if (result == true) {
-      // Payment succeeded – activate subscription
-      try {
-        await pbService.activateSubscription(auth.businessId!, reference);
-        // Refresh auth provider to update cached license expiry
+      if (result == true) {
+        // Payment succeeded – refresh license and go home
         await auth.refreshLicenseFromServer();
         if (mounted) {
-          // Navigate back to home (license now active)
           Navigator.pushReplacementNamed(context, '/home');
         }
-      } catch (e) {
-        setState(() => _error = 'Subscription activation failed: $e');
+      } else {
+        setState(() => _error = 'Payment was not completed. Please try again.');
       }
-    } else {
-      setState(() => _error = 'Payment cancelled or failed. Please try again.');
+    } catch (e) {
+      setState(() => _error = 'Error: $e');
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -104,7 +90,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Monthly subscription: ${auth.formatPrice(_amountInKes.toDouble())}',
+                'Monthly subscription: ${auth.formatPrice(1050.0)}',
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 32),

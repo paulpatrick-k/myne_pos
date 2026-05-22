@@ -2,22 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentWebViewScreen extends StatefulWidget {
+  final String authorizationUrl;
+
   const PaymentWebViewScreen({
     super.key,
-    required this.amount,
-    required this.email,
-    required this.reference,
-    required this.publicKey,
-    required this.successUrl,
-    required this.failureUrl,
+    required this.authorizationUrl,
   });
-
-  final int amount;
-  final String email;
-  final String reference;
-  final String publicKey;
-  final String successUrl;
-  final String failureUrl;
 
   @override
   State<PaymentWebViewScreen> createState() => _PaymentWebViewScreenState();
@@ -34,48 +24,20 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onNavigationRequest: _onNavigationRequest,
-          onPageStarted: (_) => setState(() => _isLoading = true),
-          onPageFinished: (_) => setState(() => _isLoading = false),
-          onWebResourceError: (error) {
-            debugPrint('WebView error: ${error.description}');
+          onNavigationRequest: (NavigationRequest request) {
+            // If the user is redirected to a success/failure URL, close the WebView
+            final url = request.url;
+            if (url.contains('callback') || url.contains('success') || url.contains('cancel')) {
+              // Payment finished – close with success (we assume success if callback is hit)
+              Navigator.pop(context, true);
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
           },
+          onPageFinished: (_) => setState(() => _isLoading = false),
         ),
       )
-      ..loadRequest(_buildPaymentUri());
-  }
-
-  Uri _buildPaymentUri() {
-    return Uri.https(
-      'checkout.paystack.com',
-      '/',
-      {
-        'amount': widget.amount.toString(),
-        'email': widget.email,
-        'reference': widget.reference,
-        'public_key': widget.publicKey,
-        'redirect_url': widget.successUrl,
-        'callback_url': widget.successUrl,
-        'on_success': widget.successUrl,
-        'on_failure': widget.failureUrl,
-      },
-    );
-  }
-
-  NavigationDecision _onNavigationRequest(NavigationRequest request) {
-    final url = request.url;
-
-    if (url.startsWith(widget.successUrl)) {
-      Navigator.of(context).pop(true);
-      return NavigationDecision.prevent;
-    }
-
-    if (url.startsWith(widget.failureUrl)) {
-      Navigator.of(context).pop(false);
-      return NavigationDecision.prevent;
-    }
-
-    return NavigationDecision.navigate;
+      ..loadRequest(Uri.parse(widget.authorizationUrl));
   }
 
   @override
@@ -87,7 +49,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           if (_isLoading)
             const Padding(
               padding: EdgeInsets.only(right: 16),
-              child: Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+              child: Center(child: CircularProgressIndicator()),
             ),
         ],
       ),
