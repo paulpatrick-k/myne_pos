@@ -134,6 +134,10 @@ class PocketBaseService {
       business = await adminPb.collection('businesses').create(body: businessData);
       print('✅ Business created: ID=${business.id}, Code=$businessCode, Data=$businessData');
     } catch (e) {
+      print('Business creation failed: $e');
+      if (e is ClientException) {
+        print('Response data: ${e.response}');
+      }
       throw Exception('Business creation failed: $e');
     }
     final businessId = business.id;
@@ -1281,5 +1285,12 @@ class PocketBaseService {
       'paystack_transaction_ref': transactionRef,
     });
     print('✅ Subscription activated for business $businessId until $newTrialEnd');
+  }
+
+  // ---- Helper Methods ----
+  String generateTransactionReference() {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final random = Random().nextInt(100000);
+    return 'txn_$timestamp$random';
   }
 }

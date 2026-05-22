@@ -16,6 +16,7 @@ class AuthProvider extends ChangeNotifier {
   String? _businessCategory;
   String? _currencyCode;
   String? _currencySymbol;
+  String? _businessCountry;
 
   // Business profile fields
   String? _businessName;
@@ -30,6 +31,7 @@ class AuthProvider extends ChangeNotifier {
 
   String? get currencyCode => _currencyCode;
   String? get currencySymbol => _currencySymbol;
+  String? get businessCountry => _businessCountry;
 
   // Business profile getters
   String? get businessName => _businessName;
@@ -87,6 +89,7 @@ class AuthProvider extends ChangeNotifier {
     _businessAddress = box.get('businessAddress');
     _businessEmail = box.get('businessEmail');
     _businessLogoUrl = box.get('businessLogoUrl');
+    _businessCountry = box.get('businessCountry');
     notifyListeners();
   }
 
@@ -163,8 +166,8 @@ class AuthProvider extends ChangeNotifier {
         await pbService.ensureAdminAuth();
         final business = await pbService.adminPb.collection('businesses').getOne(_businessId!);
         _currencyCode = business.getStringValue('currency_code');
-        final businessCountry = business.getStringValue('country');
-        _currencySymbol = _getCurrencySymbolFromBusiness(businessCountry, _currencyCode);
+        _businessCountry = business.getStringValue('country');
+        _currencySymbol = _getCurrencySymbolFromBusiness(_businessCountry, _currencyCode);
 
         // Load business profile details
         _businessName = business.getStringValue('business_name');
@@ -200,6 +203,7 @@ class AuthProvider extends ChangeNotifier {
         await box.put('businessAddress', _businessAddress);
         await box.put('businessEmail', _businessEmail);
         await box.put('businessLogoUrl', _businessLogoUrl);
+        await box.put('businessCountry', _businessCountry);
       }
 
       await syncPendingSales();
@@ -280,6 +284,7 @@ class AuthProvider extends ChangeNotifier {
     _businessAddress = null;
     _businessEmail = null;
     _businessLogoUrl = null;
+    _businessCountry = null;
 
     if (_hasAuthBox) {
       final box = Hive.box('auth');

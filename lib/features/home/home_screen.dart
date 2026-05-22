@@ -91,6 +91,7 @@ class AdminManagementTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -134,15 +135,16 @@ class AdminManagementTab extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => const ItemListScreen()),
                   ),
                 ),
-                _buildNavTile(
-                  context,
-                  icon: Icons.assignment,
-                  title: 'KRA Sync (eTIMS)',
-                  onTap: () => Navigator.push(
+                if (auth.businessCountry == 'Kenya')
+                  _buildNavTile(
                     context,
-                    MaterialPageRoute(builder: (_) => const KraSyncScreen()),
+                    icon: Icons.assignment,
+                    title: 'KRA Sync (eTIMS)',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const KraSyncScreen()),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
