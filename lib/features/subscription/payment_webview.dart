@@ -22,8 +22,13 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (NavigationRequest request) {
-            // Close the screen when payment is completed or cancelled
             final url = request.url;
+            // If we hit the custom success URL, close the WebView with true
+            if (url.contains('myne.app/success')) {
+              Navigator.pop(context, true);
+              return NavigationDecision.prevent;
+            }
+            // Also keep old detection as fallback
             if (url.contains('callback') ||
                 url.contains('success') ||
                 url.contains('cancel')) {
@@ -49,6 +54,10 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               padding: EdgeInsets.only(right: 16),
               child: Center(child: CircularProgressIndicator()),
             ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Done', style: TextStyle(color: Colors.white)),
+          ),
         ],
       ),
       body: WebViewWidget(controller: _controller),
