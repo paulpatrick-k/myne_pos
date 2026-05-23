@@ -40,7 +40,6 @@ dependencies:
   dropdown_search: ^5.0.6
   connectivity_plus: ^6.0.3
   webview_flutter: ^4.4.0
-  webview_flutter_windows: ^0.2.0   # This adds Windows support
   share_plus: ^7.2.1          # Keep this
   url_launcher: ^6.2.5
   image_picker: ^1.0.7
