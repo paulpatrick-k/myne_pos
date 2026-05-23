@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../core/services/pocketbase_service.dart';
@@ -28,15 +31,20 @@ class _PaywallScreenState extends State<PaywallScreen> {
     });
 
     try {
-      // Step 1: Call our PocketBase hook to initialize the transaction
-      final response = await pbService.pb.send('/api/init-payment', method: 'POST', body: {
-        'amount': 105000,  // 1050 KES in kobo (smallest currency unit)
-        'email': auth.userEmail ?? '',
-        'businessId': auth.businessId,
-        'reference': reference,
-      });
+      final httpClient = http.Client();
+      final response = await httpClient.post(
+        Uri.parse('http://127.0.0.1:3000/init-payment'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'amount': 105000,
+          'email': auth.userEmail ?? '',
+          'businessId': auth.businessId,
+          'reference': reference,
+        }),
+      );
 
-      final authUrl = response['authorization_url'] as String?;
+      final data = jsonDecode(response.body);
+      final authUrl = data['authorization_url'] as String?;
       if (authUrl == null) throw Exception('No authorization URL returned');
 
       // Step 2: Open the WebView with the returned URL

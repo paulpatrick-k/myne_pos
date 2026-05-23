@@ -4,10 +4,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 class PaymentWebViewScreen extends StatefulWidget {
   final String authorizationUrl;
 
-  const PaymentWebViewScreen({
-    super.key,
-    required this.authorizationUrl,
-  });
+  const PaymentWebViewScreen({super.key, required this.authorizationUrl});
 
   @override
   State<PaymentWebViewScreen> createState() => _PaymentWebViewScreenState();
@@ -25,10 +22,11 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (NavigationRequest request) {
-            // If the user is redirected to a success/failure URL, close the WebView
+            // Close the screen when payment is completed or cancelled
             final url = request.url;
-            if (url.contains('callback') || url.contains('success') || url.contains('cancel')) {
-              // Payment finished – close with success (we assume success if callback is hit)
+            if (url.contains('callback') ||
+                url.contains('success') ||
+                url.contains('cancel')) {
               Navigator.pop(context, true);
               return NavigationDecision.prevent;
             }
