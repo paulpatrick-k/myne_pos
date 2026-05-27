@@ -1,11 +1,14 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../core/services/pocketbase_service.dart';
 import 'payment_webview.dart';
+
+final proxyUrl = dotenv.env['PAYSTACK_PROXY_URL'] ?? 'http://localhost:3000';
 
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
@@ -34,7 +37,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
       // Step 1: Initialize payment via proxy
       final httpClient = http.Client();
       final initResponse = await httpClient.post(
-        Uri.parse('http://192.168.1.66:3000/init-payment'),
+        Uri.parse('$proxyUrl/init-payment'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'amount': 105000,
@@ -60,7 +63,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
         // Step 3: Confirm payment and activate subscription
         setState(() => _isProcessing = true);
         final confirmResponse = await httpClient.post(
-          Uri.parse('http://192.168.1.66:3000/confirm-payment'),
+          Uri.parse('$proxyUrl/confirm-payment'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'reference': reference,

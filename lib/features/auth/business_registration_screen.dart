@@ -135,9 +135,11 @@ class _BusinessRegistrationScreenState
         ),
       );
     } catch (e) {
+      // Show the actual error from PocketBase
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration failed: $e')),
+        SnackBar(content: Text('Registration failed: ${e.toString()}')),
       );
+      setState(() => _isLoading = false);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

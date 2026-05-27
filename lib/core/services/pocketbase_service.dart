@@ -132,13 +132,13 @@ class PocketBaseService {
     RecordModel business;
     try {
       business = await adminPb.collection('businesses').create(body: businessData);
-      print('✅ Business created: ID=${business.id}, Code=$businessCode, Data=$businessData');
+      print('✅ Business created: ID=${business.id}, Code=$businessCode');
     } catch (e) {
-      print('Business creation failed: $e');
+      print('❌ Business creation failed: $e');
       if (e is ClientException) {
         print('Response data: ${e.response}');
       }
-      throw Exception('Business creation failed: $e');
+      rethrow;
     }
     final businessId = business.id;
 
